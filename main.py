@@ -38,13 +38,13 @@ def transform_wialon_to_soap(wialon_data):
     url_data = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_item&params={%22id%22:26512780,%22flags%22:1060865}&sid=' + sid
     res_data = requests.get(url_data)
     logins = res_data.json()
-    sens_keys = logins["sens"]["item"]["sens"]
+    sens_keys = logins["item"]["sens"]
     for key in range(sens_keys.values()):
         if key.get("t") == "engine operation":
             ignition_key = key.get("p")
-    prms_vals = logins["sens"]["item"]["prms"]
+    prms_vals = logins["item"]["prms"]
     ignition_value = prms_vals.get(ignition_key)
-    odometer = logins["sens"]["item"]["cnm"]
+    odometer = logins["item"]["cnm"]
 
     wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
     client = zeep.Client(wsdl_url)
