@@ -61,7 +61,7 @@ def transform_wialon_to_soap(wialon_data):
         'GPSStatus': True,
         'latitude': latitude,
         'longitude': longitude,
-        'altitude': int(altitude),
+        'altitude': 0,
         'speed': speed,
         'odometer': odometer,
         'heading': course,
