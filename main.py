@@ -31,7 +31,8 @@ def transform_wialon_to_soap(wialon_data):
     avl_inputs_value = int(wialon_data[160:162], 16)
 
     # Convert UTC time to a readable format
-    utc_datetime = datetime.utcfromtimestamp(utc_time).strftime('%Y%m%d%H%M%S')
+    
+    utc_datetime = datetime.utcfromtimestamp(utc_time).strftime('%m/%d/%Y %H:%M:%S')
 
     #Get wialon data
     sid = getSid()
