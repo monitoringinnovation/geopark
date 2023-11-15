@@ -39,7 +39,7 @@ def transform_wialon_to_soap(wialon_data):
     res_data = requests.get(url_data)
     logins = res_data.json()
     sens_keys = logins["item"]["sens"]
-    for key in range(sens_keys.values()):
+    for key in sens_keys.values():
         if key.get("t") == "engine operation":
             ignition_key = key.get("p")
     prms_vals = logins["item"]["prms"]
