@@ -33,6 +33,8 @@ def transform_wialon_to_soap(wialon_data):
     # Convert UTC time to a readable format
     
     utc_datetime = datetime.utcfromtimestamp(utc_time).strftime('%m/%d/%Y %H:%M:%S')
+    time_utc = datetime.strptime(utc_datetime, '%m/%d/%Y %H:%M:%S')
+
 
     #Get wialon data
     sid = getSid()
@@ -55,7 +57,7 @@ def transform_wialon_to_soap(wialon_data):
     payload = {
         'modemIMEI': controller_identifier,
         'eventTypeCode': bitmask,
-        'dateTimeUTC': utc_datetime,
+        'dateTimeUTC': time_utc,
         'GPSStatus': True,
         'latitude': latitude,
         'longitude': longitude,
