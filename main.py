@@ -69,6 +69,8 @@ def transform_wialon_to_soap(wialon_data):
         'userToken': token_geo,
     }
 
+    print(payload)
+
     return payload
 
 def send_soap_request(payload):
