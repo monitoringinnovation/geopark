@@ -8,7 +8,7 @@ def getSid():
     url_token = "https://monitoringinnovation.com/api/enlistcontrolandroid/gettoken"
     resp = requests.get(url_token)
     resp_token = resp.json()
-    token = resp_token.result
+    token = resp_token["result"]
     url_sid = 'https://hst-api.wialon.com/wialon/ajax.html?svc=token/login&params={%22token%22:%22' + token + '%22}'
     res_sid = requests.get(url_sid)
     logins = res_sid.json()
