@@ -80,7 +80,7 @@ def send_soap_request(payload):
 
 def handle_client(client_socket):
     request_data = client_socket.recv(1024)  # Adjust buffer size as needed
-    wialon_data = request_data.decode("utf-8")
+    wialon_data = request_data.hex()
     
     # Transform Wialon data to SOAP request format
     soap_payload = transform_wialon_to_soap(wialon_data)
