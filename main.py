@@ -126,6 +126,7 @@ def start_server(port):
 
 if __name__ == "__main__":
     listen_port = 12395
+    getTokenGeo()
     schedule.every(24).hours.do(getTokenGeo)
 
     # Iniciar el servidor en un hilo separado
