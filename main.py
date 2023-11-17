@@ -3,6 +3,10 @@ import socket
 from datetime import datetime
 import threading
 import requests
+import schedule
+import time
+
+global_token_geo = None
 
 def getSid():
     url_token = "https://monitoringinnovation.com/api/enlistcontrolandroid/gettoken"
@@ -15,10 +19,19 @@ def getSid():
     sid = logins.get('eid')
     return sid
 
+def getTokenGeo():
+    global global_token_geo
+    wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
+    client = zeep.Client(wsdl_url)
+    token_geo = client.service.Authenticate(userName='gp.gpscontrol', password='GsZsECVHZoJd@k9u')
+    global_token_geo = token_geo
+    return token_geo
+
 def transform_wialon_to_soap(wialon_data):
+    global global_token_geo
     # Extract relevant information from Wialon data
     packet_size = int(wialon_data[0:8], 16)
-    controller_identifier = wialon_data[8:24]
+    controller_identifier = wialon_data[8:30]
     utc_time = int(wialon_data[24:32], 16)
     bitmask = int(wialon_data[32:40], 16)
     longitude = float.fromhex(wialon_data[80:96])
@@ -49,10 +62,6 @@ def transform_wialon_to_soap(wialon_data):
     ignition_value = prms_vals.get(ignition_key)
     odometer = logins["item"]["cnm"]
 
-    wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
-    client = zeep.Client(wsdl_url)
-    token_geo = client.service.Authenticate(userName='gp.gpscontrol', password='GsZsECVHZoJd@k9u')
-
     # Create SOAP request payload
     payload = {
         'modemIMEI': controller_identifier,
@@ -61,12 +70,11 @@ def transform_wialon_to_soap(wialon_data):
         'GPSStatus': True,
         'latitude': latitude,
         'longitude': longitude,
-        'altitude': 0,
         'speed': speed,
         'odometer': odometer,
         'heading': course,
         'engineStatus': True if ignition_value == 1 else False,
-        'userToken': token_geo,
+        'userToken': global_token_geo,
     }
 
     print(payload)
@@ -109,6 +117,7 @@ def start_server(port):
     print(f"[*] Listening on 0.0.0.0:{port}")
 
     while True:
+        # Esperar un tiempo antes de volver a verificar las tareas programadas
         client, addr = server.accept()
         print(f"[*] Accepted connection from {addr[0]}:{addr[1]}")
 
@@ -117,6 +126,15 @@ def start_server(port):
 
 if __name__ == "__main__":
     listen_port = 12395
+    schedule.every(24).hours.do(getTokenGeo)
 
-    # Start the server
-    start_server(listen_port)
+    # Iniciar el servidor en un hilo separado
+    server_thread = threading.Thread(target=start_server, args=(listen_port,))
+    server_thread.start()
+
+    while True:
+        # Ejecutar tareas programadas
+        schedule.run_pending()
+
+        # Esperar un tiempo antes de volver a verificar las tareas programadas
+        time.sleep(1)
