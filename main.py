@@ -31,8 +31,8 @@ def transform_wialon_to_soap(wialon_data):
     global global_token_geo
     # Extract relevant information from Wialon data
     packet_size = int(wialon_data[0:8], 16)
-    controller_identifier = wialon_data[8:30]
-    utc_time = int(wialon_data[24:32], 16)
+    controller_identifier = wialon_data[8:40]
+    utc_time = int(wialon_data[40:48], 16)
     bitmask = int(wialon_data[32:40], 16)
     longitude = float.fromhex(wialon_data[80:96])
     latitude = float.fromhex(wialon_data[96:112])
@@ -51,7 +51,11 @@ def transform_wialon_to_soap(wialon_data):
 
     #Get wialon data
     sid = getSid()
-    url_data = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_item&params={%22id%22:26512780,%22flags%22:1060865}&sid=' + sid
+    url_imei = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_items&params={"spec":{"itemsType":"avl_unit","propName":"sys_unique_id","propValueMask":"' + controller_identifier + '","sortType":"sys_unique_id"},"force":1,"flags":1,"from":0,"to":0}&sid='+sid
+    res_imei = requests.get(url_imei)
+    logins_imei = res_imei.json()
+    id_unit = logins_imei["items"][0]["id"]
+    url_data = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_item&params={%22id%22:' + id_unit + ',%22flags%22:1060865}&sid=' + sid
     res_data = requests.get(url_data)
     logins = res_data.json()
     sens_keys = logins["item"]["sens"]
