@@ -62,6 +62,8 @@ def transform_wialon_to_soap(wialon_data):
     ignition_value = prms_vals.get(ignition_key)
     odometer = logins["item"]["cnm"]
 
+    print(global_token_geo)
+
     # Create SOAP request payload
     payload = {
         'modemIMEI': controller_identifier,
