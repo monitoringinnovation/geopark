@@ -61,12 +61,13 @@ def transform_wialon_to_soap(wialon_data):
     prms_vals = logins["item"]["prms"]
     ignition_value = prms_vals.get(ignition_key)
     odometer = logins["item"]["cnm"]
+    placa = logins["item"]["nm"]
 
     print(global_token_geo)
 
     # Create SOAP request payload
     payload = {
-        'modemIMEI': controller_identifier,
+        'modemIMEI': "EQR003",
         'eventTypeCode': bitmask,
         'dateTimeUTC': time_utc,
         'GPSStatus': True,
