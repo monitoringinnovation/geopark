@@ -80,7 +80,7 @@ def transform_wialon_to_soap(wialon_data):
 
     # Create SOAP request payload
     payload = {
-        'modemIMEI': "EQR003",
+        'modemIMEI': placa,
         'eventTypeCode': bitmask,
         'dateTimeUTC': time_utc,
         'GPSStatus': True,
