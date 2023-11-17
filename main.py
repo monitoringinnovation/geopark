@@ -5,6 +5,9 @@ import threading
 import requests
 import schedule
 import time
+import codecs
+import re
+
 
 global_token_geo = None
 
@@ -51,7 +54,8 @@ def transform_wialon_to_soap(wialon_data):
 
     #Get wialon data
     sid = getSid()
-    url_imei = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_items&params={"spec":{"itemsType":"avl_unit","propName":"sys_unique_id","propValueMask":"' + controller_identifier + '","sortType":"sys_unique_id"},"force":1,"flags":1,"from":0,"to":0}&sid='+sid
+    imei_unit = re.findall(r'\b\d{8,}\b', str(codecs.decode(controller_identifier, 'hex')))[0]
+    url_imei = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_items&params={"spec":{"itemsType":"avl_unit","propName":"sys_unique_id","propValueMask":"' + imei_unit + '","sortType":"sys_unique_id"},"force":1,"flags":1,"from":0,"to":0}&sid='+sid
     res_imei = requests.get(url_imei)
     logins_imei = res_imei.json()
     print("ttttttttttttttttttt")
