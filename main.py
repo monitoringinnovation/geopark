@@ -63,7 +63,7 @@ def transform_wialon_to_soap(wialon_data):
     print(logins_imei)
     print("ttttttttttttttttttt")
     print("ttttttttttttttttttt")
-    id_unit = logins_imei["items"][0]["id"]
+    id_unit = str(logins_imei["items"][0]["id"])
     url_data = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_item&params={%22id%22:' + id_unit + ',%22flags%22:1060865}&sid=' + sid
     res_data = requests.get(url_data)
     logins = res_data.json()
