@@ -7,6 +7,7 @@ import schedule
 import time
 import codecs
 import re
+import struct
 
 global_token_geo = None
 
@@ -36,9 +37,9 @@ def transform_wialon_to_soap(wialon_data):
     controller_identifier = wialon_data[8:40]
     utc_time = int(wialon_data[40:48], 16)
     bitmask = int(wialon_data[32:40], 16)
-    longitude = float.fromhex(wialon_data[88:104])
-    latitude = float.fromhex(wialon_data[104:120])
-    altitude = float.fromhex(wialon_data[112:128])
+    longitude = struct.unpack('<d', bytes.fromhex(wialon_data[88:104]))[0]
+    latitude = struct.unpack('<d', bytes.fromhex(wialon_data[104:120]))[0]
+    altitude = int(struct.unpack('<d', bytes.fromhex(wialon_data[120:136]))[0])
     speed = int(wialon_data[136:140], 16)
     course = int(wialon_data[140:144], 16)
     satellites = int(wialon_data[136:138], 16)
@@ -84,6 +85,7 @@ def transform_wialon_to_soap(wialon_data):
         'GPSStatus': True,
         'latitude': latitude,
         'longitude': longitude,
+        'altitude': altitude,
         'speed': speed,
         'odometer': odometer,
         'heading': course,
