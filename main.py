@@ -8,7 +8,6 @@ import time
 import codecs
 import re
 
-
 global_token_geo = None
 
 def getSid():
@@ -37,11 +36,11 @@ def transform_wialon_to_soap(wialon_data):
     controller_identifier = wialon_data[8:40]
     utc_time = int(wialon_data[40:48], 16)
     bitmask = int(wialon_data[32:40], 16)
-    longitude = float.fromhex(wialon_data[80:96])
-    latitude = float.fromhex(wialon_data[96:112])
+    longitude = float.fromhex(wialon_data[88:104])
+    latitude = float.fromhex(wialon_data[104:120])
     altitude = float.fromhex(wialon_data[112:128])
-    speed = int(wialon_data[128:132], 16)
-    course = int(wialon_data[132:136], 16)
+    speed = int(wialon_data[136:140], 16)
+    course = int(wialon_data[140:144], 16)
     satellites = int(wialon_data[136:138], 16)
     power_ext_value = float.fromhex(wialon_data[142:158])
     avl_inputs_value = int(wialon_data[160:162], 16)
@@ -50,7 +49,6 @@ def transform_wialon_to_soap(wialon_data):
     
     utc_datetime = datetime.utcfromtimestamp(utc_time).strftime('%m/%d/%Y %H:%M:%S')
     time_utc = datetime.strptime(utc_datetime, '%m/%d/%Y %H:%M:%S')
-
 
     #Get wialon data
     sid = getSid()
