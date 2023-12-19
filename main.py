@@ -87,7 +87,7 @@ def transform_wialon_to_soap(wialon_data):
         'longitude': longitude,
         'altitude': altitude,
         'speed': speed,
-        'odometer': odometer,
+        'odometer': int(odometer) * 1000,
         'heading': course,
         'engineStatus': True if ignition_value == 1 else False,
         'userToken': global_token_geo,
