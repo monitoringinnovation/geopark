@@ -30,13 +30,23 @@ def getTokenGeo():
     global_token_geo = token_geo
     return token_geo
 
+def get_event(data_motion):
+    placa = data_motion["placa"]
+    motion_url = 'http://monitoringinnovation.com/api/geopark/create_event'
+    res_motion = requests.post(motion_url, data=data_motion)
+    logins = res_motion.json()
+    event_url = 'http://monitoringinnovation.com/api/geopark/get_last_event'
+    res_event = requests.post(event_url, data=placa)
+    logins_event = res_motion.json()
+    eventType = logins_event["event_type"]
+    return eventType
+
 def transform_wialon_to_soap(wialon_data):
     global global_token_geo
     # Extract relevant information from Wialon data
     packet_size = int(wialon_data[0:8], 16)
     controller_identifier = wialon_data[8:40]
     utc_time = int(wialon_data[40:48], 16)
-    bitmask = int(wialon_data[32:40], 16)
     longitude = struct.unpack('<d', bytes.fromhex(wialon_data[88:104]))[0]
     latitude = struct.unpack('<d', bytes.fromhex(wialon_data[104:120]))[0]
     altitude = int(struct.unpack('<d', bytes.fromhex(wialon_data[120:136]))[0])
@@ -72,6 +82,7 @@ def transform_wialon_to_soap(wialon_data):
             ignition_key = key.get("p")
     prms_vals = logins["item"]["prms"]
     ignition_value = prms_vals.get(ignition_key)
+    eventCode = get_event(ignition_value)
     odometer = logins["item"]["cnm"]
     placa = logins["item"]["nm"]
 
@@ -79,8 +90,8 @@ def transform_wialon_to_soap(wialon_data):
 
     # Create SOAP request payload
     payload = {
-        'modemIMEI': placa,
-        'eventTypeCode': bitmask,
+        'placa': placa,
+        'eventTypeCode': eventCode,
         'dateTimeUTC': time_utc,
         'GPSStatus': True,
         'latitude': latitude,
@@ -92,6 +103,7 @@ def transform_wialon_to_soap(wialon_data):
         'engineStatus': True if ignition_value == 1 else False,
         'userToken': global_token_geo,
     }
+    eventCode = get_event(payload)
 
     print(payload)
 
