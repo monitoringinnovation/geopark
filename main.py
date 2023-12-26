@@ -49,8 +49,8 @@ def get_coordinates(id_unit, sid):
     altitud = logins_coordinates["messages"][0]["pos"]["z"]
     heading = logins_coordinates["messages"][0]["pos"]["c"]    
     speed = logins_coordinates["messages"][0]["pos"]["s"]
-    utc_datetime = datetime.utcfromtimestamp(logins_coordinates["messages"][0]["t"]).strftime('%m/%d/%Y %H:%M:%S')
-    time_utc = datetime.strptime(utc_datetime, '%m/%d/%Y %H:%M:%S')
+    utc_datetime = datetime.datetime.utcfromtimestamp(logins_coordinates["messages"][0]["t"]).strftime('%m/%d/%Y %H:%M:%S')
+    time_utc = datetime.datetime.strptime(utc_datetime, '%m/%d/%Y %H:%M:%S')
     res = {
     "latitud": latitud,
     "longitud": longitud,
