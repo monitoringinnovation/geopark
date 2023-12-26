@@ -34,14 +34,13 @@ def obtener_epoch_medianoche_actual():
     fecha_actual = datetime.datetime.now().date()
     medianoche = datetime.datetime.combine(fecha_actual, datetime.time.min)
     epoch_medianoche = int(time.mktime(medianoche.timetuple()))
-    return epoch_medianoche + 18000
+    return epoch_medianoche + 18000 + 86399
 
 def get_coordinates(id_unit, sid):
     url_unload_msg = 'https://hst-api.wialon.com/wialon/ajax.html?svc=messages/unload&params={}&sid=' + sid
     res_unload_msg = requests.get(url_unload_msg)
-    epoch_time_left = obtener_epoch_medianoche_actual()
-    epoch_time_right = epoch_time_left + 86399
-    url_coordinates = 'https://hst-api.wialon.com/wialon/ajax.html?svc=messages/load_interval&params={"itemId":'+ str(id_unit) +',"timeFrom":' + str(epoch_time_left) + ',"timeTo":' + str(epoch_time_right) + ',"flags":1,"flagsMask":65281,"loadCount":1}&sid=' + sid
+    epoch_time_right = obtener_epoch_medianoche_actual()
+    url_coordinates = 'svc=messages/load_last&params={"itemId":'+ str(id_unit) +',"lastTime":' + str(epoch_time_right) + ',"lastCount":1,"flags":1,"flagsMask":0,"loadCount":1}&sid=' + sid
     print(url_coordinates)
     res_coordinates = requests.get(url_coordinates)
     logins_coordinates = res_coordinates.json()
