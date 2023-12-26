@@ -55,7 +55,7 @@ def get_coordinates(id_unit, sid):
     "latitud": latitud,
     "longitud": longitud,
     "altitud": altitud,
-    "heading": float(heading),
+    "heading": heading,
     "time_utc": time_utc,
     "speed": speed
     }
