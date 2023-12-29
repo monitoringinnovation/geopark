@@ -126,7 +126,6 @@ def transform_wialon_to_soap(wialon_data):
     print(payload)
     print("payload")
     print("payload")
-    create_event_motion(payload)
     return payload
 
 def send_soap_request(payload):
@@ -134,6 +133,7 @@ def send_soap_request(payload):
     client = zeep.Client(wsdl=wsdl_url)
     result = client.service.SaveTracking(**payload)
     print(result)
+    create_event_motion(payload)
 
 def handle_client(client_socket):
     request_data = client_socket.recv(1024)
