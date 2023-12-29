@@ -72,9 +72,9 @@ def get_coordinates(id_unit, sid):
 def create_event_motion(data_motion):
     data_motion["dateTimeUTC"] = data_motion["dateTimeUTC"].strftime('%Y-%m-%d %H:%M:%S')
     data_to_send = {"params": data_motion}
-    event_url = 'http://monitoringinnovation.com/api/geopark/create_event'
+    event_url = 'https://monitoringinnovation.com/api/geopark/create_event'
     res_event = requests.post(event_url, json=data_to_send)
-    logins_event = res_event.json()
+    logins_event = res_event
     return logins_event
 
 def transform_wialon_to_soap(wialon_data):
