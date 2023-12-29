@@ -52,12 +52,12 @@ def get_coordinates(id_unit, sid):
     utc_datetime = datetime.datetime.utcfromtimestamp(logins_coordinates["messages"][0]["t"]).strftime('%m/%d/%Y %H:%M:%S')
     time_utc = datetime.datetime.strptime(utc_datetime, '%m/%d/%Y %H:%M:%S')
     res = {
-    "latitud": latitud,
-    "longitud": longitud,
-    "altitud": altitud,
-    "heading": heading,
-    "time_utc": time_utc,
-    "speed": speed
+        "latitud": latitud,
+        "longitud": longitud,
+        "altitud": altitud,
+        "heading": heading,
+        "time_utc": time_utc,
+        "speed": speed
     }
     return res
 
@@ -69,19 +69,17 @@ def get_coordinates(id_unit, sid):
 #     eventType = logins_event["result"]
 #     return eventType
 
-# def create_event_motion(data_motion):
+def create_event_motion(data_motion):
+    data_motion["dateTimeUTC"] = data_motion["dateTimeUTC"].strftime('%Y-%m-%d %H:%M:%S')
     data_to_send = {"params": data_motion}
     event_url = 'http://monitoringinnovation.com/api/geopark/create_event'
-    res_event = requests.post(event_url, data=data_to_send)
+    res_event = requests.post(event_url, json=data_to_send)
     logins_event = res_event.json()
     return logins_event
 
 def transform_wialon_to_soap(wialon_data):
     global global_token_geo
-    # Extract relevant information from Wialon data
     controller_identifier = wialon_data[8:40]
-
-    #Get wialon data
     sid = getSid()
     imei_unit = re.findall(r'\b\d{8,}\b', str(codecs.decode(controller_identifier, 'hex')))[0]
     url_imei = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_items&params={"spec":{"itemsType":"avl_unit","propName":"sys_unique_id","propValueMask":"' + imei_unit + '","sortType":"sys_unique_id"},"force":1,"flags":1,"from":0,"to":0}&sid='+sid
@@ -106,12 +104,9 @@ def transform_wialon_to_soap(wialon_data):
     altitude = data_coordinates["altitud"]
     course = data_coordinates["heading"]
     speed = data_coordinates["speed"]
-
     # eventCode = get_event(placa)
     # event_type_f = eventCode if eventCode != "00" else "01"
     event_type_f = "01"
-
-    # Create SOAP request payload
     payload = {
         'modemIMEI': placa,
         'eventTypeCode': event_type_f,
@@ -131,41 +126,30 @@ def transform_wialon_to_soap(wialon_data):
     print(payload)
     print("payload")
     print("payload")
+    create_event_motion(payload)
     return payload
 
 def send_soap_request(payload):
-    # Define the WSDL URL
     wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
-    # Create a Zeep client
     client = zeep.Client(wsdl=wsdl_url)
-    # Call the SaveTracking operation
     result = client.service.SaveTracking(**payload)
-    # Print the result (optional)
     print(result)
 
 def handle_client(client_socket):
-    request_data = client_socket.recv(1024)  # Adjust buffer size as needed
+    request_data = client_socket.recv(1024)
     wialon_data = request_data.hex()    
-    # Transform Wialon data to SOAP request format
     soap_payload = transform_wialon_to_soap(wialon_data)
-
-    # Send SOAP request
     send_soap_request(soap_payload)
-
     client_socket.close()
 
 def start_server(port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(('0.0.0.0', port))
     server.listen(5)
-
     print(f"[*] Listening on 0.0.0.0:{port}")
-
     while True:
-        # Esperar un tiempo antes de volver a verificar las tareas programadas
         client, addr = server.accept()
         print(f"[*] Accepted connection from {addr[0]}:{addr[1]}")
-
         client_handler = threading.Thread(target=handle_client, args=(client,))
         client_handler.start()
 
@@ -173,14 +157,8 @@ if __name__ == "__main__":
     listen_port = 12395
     getTokenGeo()
     schedule.every(24).hours.do(getTokenGeo)
-
-    # Iniciar el servidor en un hilo separado
     server_thread = threading.Thread(target=start_server, args=(listen_port,))
     server_thread.start()
-
     while True:
-        # Ejecutar tareas programadas
         schedule.run_pending()
-
-        # Esperar un tiempo antes de volver a verificar las tareas programadas
         time.sleep(1)
