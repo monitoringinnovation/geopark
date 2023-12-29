@@ -94,7 +94,7 @@ def transform_wialon_to_soap(wialon_data):
         if key.get("t") == "engine operation":
             ignition_key = key.get("p")
     prms_vals = logins["item"]["prms"]
-    ignition_value = prms_vals.get(ignition_key)
+    ignition_value = prms_vals.get(ignition_key).get("v")
     odometer = logins["item"]["cnm"]
     placa = logins["item"]["nm"]
     data_coordinates = get_coordinates(id_unit, sid)
