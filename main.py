@@ -61,13 +61,34 @@ def get_coordinates(id_unit, sid):
     }
     return res
 
-# def get_event(data_motion):
-#     placa = data_motion["placa"]
-#     event_url = 'http://monitoringinnovation.com/api/geopark/get_last_event/placa=' + placa
-#     res_event = requests.get(event_url)
-#     logins_event = res_event.json()
-#     eventType = logins_event["result"]
-#     return eventType
+def get_last_event(placa):
+    event_url = 'http://monitoringinnovation.com/api/geopark/get_last_event/placa=' + placa
+    res_event = requests.get(event_url)
+    logins_event = res_event.json()
+    last_event = logins_event["result"]["result"]
+    return last_event
+
+def get_event(payload):
+    last_event = get_last_event(payload["modemIMEI"])
+    delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
+    delta_time = last_event["date"] - int(payload["dateTimeUTC"].timestamp())
+    factor_event = delta_speed/delta_time
+    speed_hard = factor_event/9.807
+
+    if payload["engineStatus"] == 1 and last_event["eventTypeCode"] == "04":
+        return "01"
+    elif payload["engineStatus"] == 1 and payload["speed"] == 0 and payload["latitude"] == last_event["latitude"] and payload["longitude"] == last_event["longitude"]:
+        return "03"
+    elif payload["engineStatus"] == 0:
+        return "04"
+    elif payload["speed"] >= 80:
+        return "05"
+    elif last_event["speed"] > payload["speed"] and speed_hard > 0.35:
+        return "06"
+    elif last_event["speed"] < payload["speed"] and abs(speed_hard) > 0.35:
+        return "07"
+    else:
+        return "02"
 
 def create_event_motion(data_motion):
     data_motion["dateTimeUTC"] = data_motion["dateTimeUTC"].strftime('%Y-%m-%d %H:%M:%S')
@@ -104,12 +125,10 @@ def transform_wialon_to_soap(wialon_data):
     altitude = data_coordinates["altitud"]
     course = data_coordinates["heading"]
     speed = data_coordinates["speed"]
-    # eventCode = get_event(placa)
-    # event_type_f = eventCode if eventCode != "00" else "01"
-    event_type_f = "01"
+    event_code = "02"
     payload = {
         'modemIMEI': placa,
-        'eventTypeCode': event_type_f,
+        'eventTypeCode': event_code,
         'dateTimeUTC': time_utc,
         'GPSStatus': True,
         'latitude': latitude,
@@ -121,6 +140,7 @@ def transform_wialon_to_soap(wialon_data):
         'engineStatus': True if ignition_value == 1 else False,
         'userToken': global_token_geo,
     }
+    payload["eventTypeCode"] = get_event(placa)
     print("payload")
     print("payload")
     print(payload)
