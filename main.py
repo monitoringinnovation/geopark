@@ -77,7 +77,7 @@ def get_event(payload):
         factor_event = delta_speed/delta_time
         speed_hard = factor_event/9.807
 
-        if payload["engineStatus"] == 1 and last_event["eventTypeCode"] == "04":
+        if payload["engineStatus"] == 1 and last_event["eventType"] == "04":
             return "01"
         elif payload["engineStatus"] == 1 and payload["speed"] == 0 and payload["latitude"] == last_event["latitude"] and payload["longitude"] == last_event["longitude"]:
             return "03"
