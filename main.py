@@ -85,9 +85,9 @@ def get_event(payload):
             return "04"
         elif payload["speed"] >= 80:
             return "05"
-        elif last_event["speed"] > payload["speed"] and speed_hard > 0.35:
+        elif int(last_event["speed"]) > payload["speed"] and speed_hard > 0.35:
             return "06"
-        elif last_event["speed"] < payload["speed"] and abs(speed_hard) > 0.35:
+        elif int(last_event["speed"]) < payload["speed"] and abs(speed_hard) > 0.35:
             return "07"
         else:
             return "02"
