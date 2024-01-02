@@ -140,7 +140,7 @@ def transform_wialon_to_soap(wialon_data):
         'engineStatus': True if ignition_value == 1 else False,
         'userToken': global_token_geo,
     }
-    payload["eventTypeCode"] = get_event(placa)
+    payload["eventTypeCode"] = get_event(payload)
     print("payload")
     print("payload")
     print(payload)
