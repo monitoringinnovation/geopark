@@ -72,7 +72,7 @@ def get_event(payload):
     last_event = get_last_event(payload["modemIMEI"])
     print(last_event)
     if last_event:
-        delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
+        delta_speed = (int(last_event["speed"]) - int(payload["speed"])) * 0.277778
         delta_time = last_event["date"] - int(payload["dateTimeUTC"].timestamp())
         factor_event = delta_speed/delta_time
         speed_hard = factor_event/9.807
