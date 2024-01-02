@@ -70,23 +70,27 @@ def get_last_event(placa):
 
 def get_event(payload):
     last_event = get_last_event(payload["modemIMEI"])
-    delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
-    delta_time = last_event["date"] - int(payload["dateTimeUTC"].timestamp())
-    factor_event = delta_speed/delta_time
-    speed_hard = factor_event/9.807
+    print(last_event)
+    if last_event:
+        delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
+        delta_time = last_event["date"] - int(payload["dateTimeUTC"].timestamp())
+        factor_event = delta_speed/delta_time
+        speed_hard = factor_event/9.807
 
-    if payload["engineStatus"] == 1 and last_event["eventTypeCode"] == "04":
-        return "01"
-    elif payload["engineStatus"] == 1 and payload["speed"] == 0 and payload["latitude"] == last_event["latitude"] and payload["longitude"] == last_event["longitude"]:
-        return "03"
-    elif payload["engineStatus"] == 0:
-        return "04"
-    elif payload["speed"] >= 80:
-        return "05"
-    elif last_event["speed"] > payload["speed"] and speed_hard > 0.35:
-        return "06"
-    elif last_event["speed"] < payload["speed"] and abs(speed_hard) > 0.35:
-        return "07"
+        if payload["engineStatus"] == 1 and last_event["eventTypeCode"] == "04":
+            return "01"
+        elif payload["engineStatus"] == 1 and payload["speed"] == 0 and payload["latitude"] == last_event["latitude"] and payload["longitude"] == last_event["longitude"]:
+            return "03"
+        elif payload["engineStatus"] == 0:
+            return "04"
+        elif payload["speed"] >= 80:
+            return "05"
+        elif last_event["speed"] > payload["speed"] and speed_hard > 0.35:
+            return "06"
+        elif last_event["speed"] < payload["speed"] and abs(speed_hard) > 0.35:
+            return "07"
+        else:
+            return "02"
     else:
         return "02"
 
