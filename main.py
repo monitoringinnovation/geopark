@@ -62,12 +62,10 @@ def get_coordinates(id_unit, sid):
     return res
 
 def get_last_event(placa):
-    event_url = 'http://monitoringinnovation.com/api/geopark/get_last_event'
-    params = {'placa': placa}
-    headers = {'Content-Type': 'application/json'}
-    res_event = requests.get(event_url, params=params, headers=headers)
+    event_url = 'http://monitoringinnovation.com/api/geopark/get_last_event/placa=' + placa
+    res_event = requests.get(event_url)
     logins_event = res_event.json()
-    last_event = logins_event["result"]["result"]
+    last_event = logins_event["result"]
     return last_event
 
 def get_event(payload):
