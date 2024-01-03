@@ -79,7 +79,7 @@ def get_event(payload):
 
         if payload["engineStatus"] == 1 and last_event["eventType"] == "04":
             return "01"
-        elif payload["engineStatus"] == 1 and payload["speed"] == 0 and payload["latitude"] == last_event["latitude"] and payload["longitude"] == last_event["longitude"]:
+        elif payload["engineStatus"] == 1 and payload["speed"] == 0 and str(payload["latitude"]) == last_event["latitude"] and str(payload["longitude"]) == last_event["longitude"]:
             return "03"
         elif payload["engineStatus"] == 0:
             return "04"
