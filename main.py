@@ -145,6 +145,7 @@ def transform_wialon_to_soap(wialon_data):
         'userToken': global_token_geo,
     }
     payload["eventTypeCode"] = get_event(payload)
+    time.sleep(1)
     print("payload")
     print("payload")
     print(payload)
