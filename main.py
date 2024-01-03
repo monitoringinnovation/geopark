@@ -75,7 +75,14 @@ def get_event(payload):
         last_event["latitude"] = float(last_event["latitude"])
         last_event["longitude"] = float(last_event["longitude"])
         last_event["speed"] = int(last_event["speed"])
+        last_event["altitude"] = int(last_event["altitude"])
+        last_event["odometer"] = int(last_event["odometer"])
+        last_event["heading"] = int(last_event["heading"])
+        last_event["userToken"] = payload['userToken']
         last_event['modemIMEI'] = last_event.pop('placa')
+        last_event['eventTypeCode'] = last_event.pop('eventType')
+        last_event['dateTimeUTC'] = datetime.datetime.utcfromtimestamp(last_event.pop('date')+18000)
+
         delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
         delta_time = last_event["date"] - int(payload["dateTimeUTC"].timestamp())
         factor_event = delta_speed/delta_time
