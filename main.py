@@ -72,22 +72,29 @@ def get_event(payload):
     last_event = get_last_event(payload["modemIMEI"])
     print(last_event)
     if last_event:
-        delta_speed = (int(last_event["speed"]) - int(payload["speed"])) * 0.277778
+        last_event["latitude"] = float(last_event["latitude"])
+        last_event["longitude"] = float(last_event["longitude"])
+        last_event["speed"] = int(last_event["speed"])
+        last_event['modemIMEI'] = last_event.pop('placa')
+        delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
         delta_time = last_event["date"] - int(payload["dateTimeUTC"].timestamp())
         factor_event = delta_speed/delta_time
         speed_hard = factor_event/9.807
+        print(last_event)
+        if last_event == payload:
+            return "00"
 
         if payload["engineStatus"] == 1 and last_event["eventType"] == "04":
             return "01"
-        elif payload["engineStatus"] == 1 and payload["speed"] == 0 and str(payload["latitude"]) == last_event["latitude"] and str(payload["longitude"]) == last_event["longitude"]:
+        elif payload["engineStatus"] == 1 and payload["speed"] == 0 and payload["latitude"] == last_event["latitude"] and payload["longitude"] == last_event["longitude"]:
             return "03"
         elif payload["engineStatus"] == 0:
             return "04"
         elif payload["speed"] >= 80:
             return "05"
-        elif int(last_event["speed"]) > payload["speed"] and speed_hard > 0.35:
+        elif last_event["speed"] > payload["speed"] and speed_hard > 0.35:
             return "06"
-        elif int(last_event["speed"]) < payload["speed"] and abs(speed_hard) > 0.35:
+        elif last_event["speed"] < payload["speed"] and abs(speed_hard) > 0.35:
             return "07"
         else:
             return "02"
@@ -164,7 +171,8 @@ def handle_client(client_socket):
     request_data = client_socket.recv(1024)
     wialon_data = request_data.hex()    
     soap_payload = transform_wialon_to_soap(wialon_data)
-    send_soap_request(soap_payload)
+    if soap_payload['eventTypeCode'] != "00":
+        send_soap_request(soap_payload)
     client_socket.close()
 
 def start_server(port):
