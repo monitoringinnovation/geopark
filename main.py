@@ -81,7 +81,7 @@ def get_event(payload):
         last_event["userToken"] = payload['userToken']
         last_event['modemIMEI'] = last_event.pop('placa')
         last_event['eventTypeCode'] = last_event.pop('eventType')
-        last_event['dateTimeUTC'] = datetime.datetime.utcfromtimestamp(last_event.pop('date')+18000)
+        last_event['dateTimeUTC'] = datetime.datetime.utcfromtimestamp(last_event.pop('date'))
 
         delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
         delta_time = int(last_event["dateTimeUTC"].timestamp()) - int(payload["dateTimeUTC"].timestamp())
