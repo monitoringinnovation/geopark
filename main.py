@@ -83,13 +83,13 @@ def get_event(payload):
         last_event['eventTypeCode'] = last_event.pop('eventType')
         last_event['dateTimeUTC'] = datetime.datetime.utcfromtimestamp(last_event.pop('date'))
 
+        if last_event['dateTimeUTC'] == payload["dateTimeUTC"]:
+            return "00"
         delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
         delta_time = int(last_event["dateTimeUTC"].timestamp()) - int(payload["dateTimeUTC"].timestamp())
         factor_event = delta_speed/delta_time
         speed_hard = factor_event/9.807
         print(last_event)
-        if last_event['dateTimeUTC'] == payload["dateTimeUTC"]:
-            return "00"
 
         if payload["engineStatus"] == 1 and last_event["eventTypeCode"] == "04":
             return "01"
