@@ -170,7 +170,11 @@ def transform_wialon_to_soap(wialon_data):
 def send_soap_request(payload):
     wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
     client = zeep.Client(wsdl=wsdl_url)
-    result = client.service.SaveTracking(**payload)
+    try:
+        result = client.service.SaveTracking(**payload)
+    except:
+        payload["userToken"] = getTokenGeo()
+        result = client.service.SaveTracking(**payload)
     print(result)
     create_event_motion(payload)
 
