@@ -139,7 +139,10 @@ def transform_wialon_to_soap(wialon_data):
     print(prms_vals)
     print(ignition_value_obj)
     print("**************")
-    ignition_value = ignition_value_obj.get("v")
+    if ignition_value_obj is None:
+        ignition_value = 1
+    else:
+        ignition_value = ignition_value_obj.get("v")
     odometer = logins["item"]["cnm"]
     placa = logins["item"]["nm"]
     data_coordinates = get_coordinates(id_unit, sid)
