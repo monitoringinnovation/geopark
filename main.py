@@ -176,12 +176,7 @@ def transform_wialon_to_soap(wialon_data):
     }
     payload["eventTypeCode"] = get_event(payload)
     if not payload["latitude"]:
-        las_event_not_pos = get_last_event(payload["modemIMEI"])
-        payload["latitude"] = float(las_event_not_pos["latitude"])
-        payload["longitude"] = float(las_event_not_pos["longitude"])
-        payload["altitude"] = int(las_event_not_pos["speed"])
-        payload["speed"] = int(las_event_not_pos["altitude"])
-        payload["heading"] = int(las_event_not_pos["heading"])
+        payload["eventTypeCode"] = "00"
     time.sleep(1)
     print("payload")
     print("payload")
