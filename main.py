@@ -134,6 +134,11 @@ def transform_wialon_to_soap(wialon_data):
             ignition_key = key.get("p")
     prms_vals = logins["item"]["prms"]
     ignition_value_obj = prms_vals.get(ignition_key)
+    print("**************")
+    print(logins)
+    print(prms_vals)
+    print(ignition_value_obj)
+    print("**************")
     ignition_value = ignition_value_obj.get("v")
     odometer = logins["item"]["cnm"]
     placa = logins["item"]["nm"]
