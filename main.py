@@ -44,11 +44,18 @@ def get_coordinates(id_unit, sid):
     print(url_coordinates)
     res_coordinates = requests.get(url_coordinates)
     logins_coordinates = res_coordinates.json()
-    latitud = logins_coordinates["messages"][0]["pos"]["y"]
-    longitud = logins_coordinates["messages"][0]["pos"]["x"]
-    altitud = logins_coordinates["messages"][0]["pos"]["z"]
-    heading = logins_coordinates["messages"][0]["pos"]["c"]    
-    speed = logins_coordinates["messages"][0]["pos"]["s"]
+    if logins_coordinates["messages"][0]["pos"] is None:
+        latitud = False
+        longitud = False
+        altitud = False
+        heading = False
+        speed = False
+    else:
+        latitud = logins_coordinates["messages"][0]["pos"]["y"]
+        longitud = logins_coordinates["messages"][0]["pos"]["x"]
+        altitud = logins_coordinates["messages"][0]["pos"]["z"]
+        heading = logins_coordinates["messages"][0]["pos"]["c"]    
+        speed = logins_coordinates["messages"][0]["pos"]["s"]
     utc_datetime = datetime.datetime.utcfromtimestamp(logins_coordinates["messages"][0]["t"]-18000).strftime('%m/%d/%Y %H:%M:%S')
     time_utc = datetime.datetime.strptime(utc_datetime, '%m/%d/%Y %H:%M:%S')
     res = {
@@ -168,6 +175,13 @@ def transform_wialon_to_soap(wialon_data):
         'userToken': global_token_geo,
     }
     payload["eventTypeCode"] = get_event(payload)
+    if not payload["latitude"]:
+        las_event_not_pos = get_last_event(payload["modemIMEI"])
+        payload["latitude"] = float(las_event_not_pos["latitude"])
+        payload["longitude"] = float(las_event_not_pos["longitude"])
+        payload["altitude"] = int(las_event_not_pos["speed"])
+        payload["speed"] = int(las_event_not_pos["altitude"])
+        payload["heading"] = int(las_event_not_pos["heading"])
     time.sleep(1)
     print("payload")
     print("payload")
