@@ -8,6 +8,7 @@ import time
 import codecs
 import re
 import struct
+import xml.sax.saxutils
 
 global_token_geo = None
 
@@ -187,6 +188,9 @@ def transform_wialon_to_soap(wialon_data):
 
 def send_soap_request(payload):
     global global_token_geo
+    for key, value in payload.items():
+        if isinstance(value, str):
+            payload[key] = xml.sax.saxutils.escape(value)
     wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
     client = zeep.Client(wsdl=wsdl_url)
     try:
