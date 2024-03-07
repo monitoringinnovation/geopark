@@ -94,7 +94,7 @@ def get_coordinates(id_unit, sid):
     url_unload_msg = 'https://hst-api.wialon.com/wialon/ajax.html?svc=messages/unload&params={}&sid=' + sid
     res_unload_msg = requests.get(url_unload_msg)
     epoch_time_right = obtener_epoch_medianoche_actual()
-    url_coordinates = 'https://hst-api.wialon.com/wialon/ajax.html?svc=messages/load_last&params={"itemId":'+ str(id_unit) +',"lastTime":' + str(epoch_time_right) + ',"lastCount":1,"flags":1,"flagsMask":0,"loadCount":1}&sid=' + sid
+    url_coordinates = 'https://hst-api.wialon.com/wialon/ajax.html?svc=messages/load_last&params={"itemId":'+ str(id_unit) +',"lastTime":' + str(epoch_time_right) + ',"lastCount":1,"flags":7,"flagsMask":0,"loadCount":1}&sid=' + sid
     print(url_coordinates)
     res_coordinates = requests.get(url_coordinates)
     logins_coordinates = res_coordinates.json()
