@@ -91,8 +91,11 @@ def get_event(payload):
         last_event['eventTypeCode'] = last_event.pop('eventType')
         last_event['dateTimeUTC'] = datetime.datetime.utcfromtimestamp(last_event.pop('date'))
 
-        if last_event['dateTimeUTC'] == payload["dateTimeUTC"]:
-            return "00"
+        response = {}
+        response["last_event"] = last_event
+
+        # if last_event['dateTimeUTC'] == payload["dateTimeUTC"]:
+        #     response["eventCode"] = "00"
         delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
         delta_time = int(last_event["dateTimeUTC"].timestamp()) - int(payload["dateTimeUTC"].timestamp())
         factor_event = delta_speed/delta_time
@@ -100,21 +103,24 @@ def get_event(payload):
         print(last_event)
 
         if payload["engineStatus"] == 1 and last_event["eventTypeCode"] == "04":
-            return "01"
+            response["eventCode"] = "01"
         elif payload["engineStatus"] == 1 and payload["speed"] == 0 and payload["latitude"] == last_event["latitude"] and payload["longitude"] == last_event["longitude"]:
-            return "03"
+            response["eventCode"] = "03"
         elif payload["engineStatus"] == 0:
-            return "04"
+            response["eventCode"] = "04"
         elif payload["speed"] >= 80:
-            return "05"
+            response["eventCode"] = "05"
         elif last_event["speed"] > payload["speed"] and speed_hard > 0.35:
-            return "06"
+            response["eventCode"] = "06"
         elif last_event["speed"] < payload["speed"] and abs(speed_hard) > 0.35:
-            return "07"
+            response["eventCode"] = "07"
         else:
-            return "02"
+            response["eventCode"] = "02"
+        return response
     else:
-        return "02"
+        response["eventCode"] = "02"
+        return response
+
 
 def create_event_motion(data_motion):
     data_motion["dateTimeUTC"] = data_motion["dateTimeUTC"].strftime('%Y-%m-%d %H:%M:%S')
@@ -140,6 +146,8 @@ def transform_wialon_to_soap(wialon_data):
     for key in sens_keys.values():
         if key.get("t") == "engine operation":
             ignition_key = key.get("p")
+        else:
+            continue
     prms_vals = logins["item"]["prms"]
     ignition_value_obj = prms_vals.get(ignition_key)
     print("**************")
@@ -175,9 +183,15 @@ def transform_wialon_to_soap(wialon_data):
         'engineStatus': True if ignition_value == 1 else False,
         'userToken': global_token_geo,
     }
-    payload["eventTypeCode"] = get_event(payload)
+    last_event = get_event(payload)
+    payload["eventTypeCode"] = last_event["eventCode"]
     if not payload["latitude"]:
-        payload["eventTypeCode"] = "00"
+        payload["latitude"] = float(last_event["latitude"])
+        payload["longitude"] = float(last_event["longitude"])
+        payload["altitude"] = int(last_event["altitude"])
+        payload["speed"] = int(last_event["speed"])
+        payload["odometer"] = int(last_event["odometer"])
+        payload["heading"] = int(last_event["heading"])
     time.sleep(1)
     print("payload")
     print("payload")
@@ -198,6 +212,7 @@ def send_soap_request(payload):
             wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
             client = zeep.Client(wsdl=wsdl_url)
             result = client.service.SaveTracking(**payload)
+            create_event_motion(payload)
             print(result)
         except:
             wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
@@ -205,10 +220,10 @@ def send_soap_request(payload):
             global_token_geo = getTokenGeo()
             payload["userToken"] = global_token_geo
             result = client.service.SaveTracking(**payload)
+            create_event_motion(payload)
             print(result)
     except:
         print("ocurrio un error")
-    create_event_motion(payload)
 
 def handle_client(client_socket):
     request_data = client_socket.recv(1024)
@@ -216,6 +231,8 @@ def handle_client(client_socket):
     soap_payload = transform_wialon_to_soap(wialon_data)
     if soap_payload['eventTypeCode'] != "00":
         send_soap_request(soap_payload)
+    else:
+        print("eventTypeCode: 00")
     client_socket.close()
 
 def start_server(port):
