@@ -36,39 +36,6 @@ def obtener_epoch_medianoche_actual():
     medianoche = datetime.datetime.combine(fecha_actual, datetime.time.min)
     epoch_medianoche = int(time.mktime(medianoche.timetuple()))
     return epoch_medianoche + 18000 + 86399
-
-def get_coordinates(id_unit, sid):
-    url_unload_msg = 'https://hst-api.wialon.com/wialon/ajax.html?svc=messages/unload&params={}&sid=' + sid
-    res_unload_msg = requests.get(url_unload_msg)
-    epoch_time_right = obtener_epoch_medianoche_actual()
-    url_coordinates = 'https://hst-api.wialon.com/wialon/ajax.html?svc=messages/load_last&params={"itemId":'+ str(id_unit) +',"lastTime":' + str(epoch_time_right) + ',"lastCount":1,"flags":1,"flagsMask":0,"loadCount":1}&sid=' + sid
-    print(url_coordinates)
-    res_coordinates = requests.get(url_coordinates)
-    logins_coordinates = res_coordinates.json()
-    if logins_coordinates["messages"][0]["pos"] is None:
-        latitud = False
-        longitud = False
-        altitud = False
-        heading = False
-        speed = False
-    else:
-        latitud = logins_coordinates["messages"][0]["pos"]["y"]
-        longitud = logins_coordinates["messages"][0]["pos"]["x"]
-        altitud = logins_coordinates["messages"][0]["pos"]["z"]
-        heading = logins_coordinates["messages"][0]["pos"]["c"]    
-        speed = logins_coordinates["messages"][0]["pos"]["s"]
-    utc_datetime = datetime.datetime.utcfromtimestamp(logins_coordinates["messages"][0]["t"]-18000).strftime('%m/%d/%Y %H:%M:%S')
-    time_utc = datetime.datetime.strptime(utc_datetime, '%m/%d/%Y %H:%M:%S')
-    res = {
-        "latitud": latitud,
-        "longitud": longitud,
-        "altitud": altitud,
-        "heading": heading,
-        "time_utc": time_utc,
-        "speed": speed
-    }
-    return res
-
 def get_last_event(placa):
     event_url = 'http://monitoringinnovation.com/api/geopark/get_last_event/placa=' + placa
     res_event = requests.get(event_url)
@@ -123,6 +90,37 @@ def get_event(payload):
         response["eventCode"] = "02"
         return response
 
+def get_coordinates(id_unit, sid):
+    url_unload_msg = 'https://hst-api.wialon.com/wialon/ajax.html?svc=messages/unload&params={}&sid=' + sid
+    res_unload_msg = requests.get(url_unload_msg)
+    epoch_time_right = obtener_epoch_medianoche_actual()
+    url_coordinates = 'https://hst-api.wialon.com/wialon/ajax.html?svc=messages/load_last&params={"itemId":'+ str(id_unit) +',"lastTime":' + str(epoch_time_right) + ',"lastCount":1,"flags":1,"flagsMask":0,"loadCount":1}&sid=' + sid
+    print(url_coordinates)
+    res_coordinates = requests.get(url_coordinates)
+    logins_coordinates = res_coordinates.json()
+    if logins_coordinates["messages"].get("pos") is None:
+        latitud = False
+        longitud = False
+        altitud = False
+        heading = False
+        speed = False
+    else:
+        latitud = logins_coordinates["messages"][0]["pos"]["y"]
+        longitud = logins_coordinates["messages"][0]["pos"]["x"]
+        altitud = logins_coordinates["messages"][0]["pos"]["z"]
+        heading = logins_coordinates["messages"][0]["pos"]["c"]    
+        speed = logins_coordinates["messages"][0]["pos"]["s"]
+    utc_datetime = datetime.datetime.utcfromtimestamp(logins_coordinates["messages"][0]["t"]-18000).strftime('%m/%d/%Y %H:%M:%S')
+    time_utc = datetime.datetime.strptime(utc_datetime, '%m/%d/%Y %H:%M:%S')
+    res = {
+        "latitud": latitud,
+        "longitud": longitud,
+        "altitud": altitud,
+        "heading": heading,
+        "time_utc": time_utc,
+        "speed": speed
+    }
+    return res
 
 def create_event_motion(data_motion):
     data_motion["dateTimeUTC"] = data_motion["dateTimeUTC"].strftime('%Y-%m-%d %H:%M:%S')
