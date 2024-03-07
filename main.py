@@ -186,12 +186,12 @@ def transform_wialon_to_soap(wialon_data):
     last_event = get_event(payload)
     payload["eventTypeCode"] = last_event["eventCode"]
     if not payload["latitude"]:
-        payload["latitude"] = float(last_event["latitude"])
-        payload["longitude"] = float(last_event["longitude"])
-        payload["altitude"] = int(last_event["altitude"])
-        payload["speed"] = int(last_event["speed"])
-        payload["odometer"] = int(last_event["odometer"])
-        payload["heading"] = int(last_event["heading"])
+        payload["latitude"] = float(last_event["last_event"]["latitude"])
+        payload["longitude"] = float(last_event["last_event"]["longitude"])
+        payload["altitude"] = int(last_event["last_event"]["altitude"])
+        payload["speed"] = int(last_event["last_event"]["speed"])
+        payload["odometer"] = int(last_event["last_event"]["odometer"])
+        payload["heading"] = int(last_event["last_event"]["heading"])
     time.sleep(1)
     print("payload")
     print("payload")
