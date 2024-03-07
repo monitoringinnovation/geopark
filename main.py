@@ -98,7 +98,7 @@ def get_coordinates(id_unit, sid):
     print(url_coordinates)
     res_coordinates = requests.get(url_coordinates)
     logins_coordinates = res_coordinates.json()
-    if logins_coordinates["messages"].get("pos") is None:
+    if logins_coordinates["messages"][0].get("pos") is None:
         latitud = False
         longitud = False
         altitud = False
