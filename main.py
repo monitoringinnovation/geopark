@@ -136,12 +136,20 @@ def transform_wialon_to_soap(wialon_data):
     sid = getSid()
     imei_unit = re.findall(r'\b\d{8,}\b', str(codecs.decode(controller_identifier, 'hex')))[0]
     url_imei = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_items&params={"spec":{"itemsType":"avl_unit","propName":"sys_unique_id","propValueMask":"' + imei_unit + '","sortType":"sys_unique_id"},"force":1,"flags":1,"from":0,"to":0}&sid='+sid
+    print("url_imei")
+    print(url_imei)
     res_imei = requests.get(url_imei)
     logins_imei = res_imei.json()
+    print("logins_imei")
+    print(logins_imei)
     id_unit = str(logins_imei["items"][0]["id"])
     url_data = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_item&params={%22id%22:' + id_unit + ',%22flags%22:1060865}&sid=' + sid
+    print("url_data")
+    print(url_data)
     res_data = requests.get(url_data)
     logins = res_data.json()
+    print("sensores data")
+    print(logins)
     sens_keys = logins["item"]["sens"]
     for key in sens_keys.values():
         if key.get("t") == "engine operation":
@@ -150,11 +158,10 @@ def transform_wialon_to_soap(wialon_data):
             continue
     prms_vals = logins["item"]["prms"]
     ignition_value_obj = prms_vals.get(ignition_key)
-    print("**************")
-    print(logins)
+    print("prms_vals")
     print(prms_vals)
     print(ignition_value_obj)
-    print("**************")
+    print("ignition_value_obj")
     if ignition_value_obj is None:
         ignition_value = 1
     else:
@@ -194,10 +201,7 @@ def transform_wialon_to_soap(wialon_data):
         payload["heading"] = int(last_event["last_event"]["heading"])
     time.sleep(1)
     print("payload")
-    print("payload")
     print(payload)
-    print("payload")
-    print("payload")
     return payload
 
 def send_soap_request(payload):
@@ -212,7 +216,6 @@ def send_soap_request(payload):
             wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
             client = zeep.Client(wsdl=wsdl_url)
             result = client.service.SaveTracking(**payload)
-            create_event_motion(payload)
             print(result)
         except:
             wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
@@ -220,7 +223,6 @@ def send_soap_request(payload):
             global_token_geo = getTokenGeo()
             payload["userToken"] = global_token_geo
             result = client.service.SaveTracking(**payload)
-            create_event_motion(payload)
             print(result)
     except:
         print("ocurrio un error")
@@ -229,6 +231,7 @@ def handle_client(client_socket):
     request_data = client_socket.recv(1024)
     wialon_data = request_data.hex()    
     soap_payload = transform_wialon_to_soap(wialon_data)
+    create_event_motion(soap_payload)
     if soap_payload['eventTypeCode'] != "00":
         send_soap_request(soap_payload)
     else:
