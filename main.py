@@ -213,16 +213,23 @@ def send_soap_request(payload):
     client = zeep.Client(wsdl=wsdl_url)
     try:
         try:
+            print(1)
             wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
             client = zeep.Client(wsdl=wsdl_url)
+            print(2)
             result = client.service.SaveTracking(**payload)
+            print(3)
             print(result)
         except:
+            print(4)
             wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
             client = zeep.Client(wsdl=wsdl_url)
+            print(5)
             global_token_geo = getTokenGeo()
             payload["userToken"] = global_token_geo
+            print(6)
             result = client.service.SaveTracking(**payload)
+            print(7)
             print(result)
     except:
         print("ocurrio un error")
