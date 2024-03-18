@@ -110,7 +110,7 @@ def get_coordinates(id_unit, sid):
         altitud = logins_coordinates["messages"][0]["pos"]["z"]
         heading = logins_coordinates["messages"][0]["pos"]["c"]    
         speed = logins_coordinates["messages"][0]["pos"]["s"]
-    utc_datetime = datetime.datetime.fromtimestamp(logins_coordinates["messages"][0]["t"]-18000).strftime('%m/%d/%Y %H:%M:%S')
+    utc_datetime = datetime.datetime.fromtimestamp(logins_coordinates["messages"][0]["t"]-36000).strftime('%m/%d/%Y %H:%M:%S')
     time_utc = datetime.datetime.strptime(utc_datetime, '%m/%d/%Y %H:%M:%S')
     res = {
         "latitud": latitud,
@@ -213,6 +213,8 @@ def send_soap_request(payload):
     client = zeep.Client(wsdl=wsdl_url)
     try:
         try:
+            print("payload 2")
+            print(payload)
             wsdl_url = 'http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl'
             client = zeep.Client(wsdl=wsdl_url)
             result = client.service.SaveTracking(**payload)
