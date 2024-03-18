@@ -46,6 +46,7 @@ def get_last_event(placa):
 def get_event(payload):
     last_event = get_last_event(payload["modemIMEI"])
     print(last_event)
+    response = {}
     if last_event:
         last_event["latitude"] = float(last_event["latitude"])
         last_event["longitude"] = float(last_event["longitude"])
@@ -58,7 +59,6 @@ def get_event(payload):
         last_event['eventTypeCode'] = last_event.pop('eventType')
         last_event['dateTimeUTC'] = datetime.datetime.utcfromtimestamp(last_event.pop('date'))
 
-        response = {}
         response["last_event"] = last_event
 
         if last_event['dateTimeUTC'] == payload["dateTimeUTC"]:
