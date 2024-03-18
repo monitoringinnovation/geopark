@@ -50,7 +50,7 @@ def get_event(payload):
         last_event["latitude"] = float(last_event["latitude"])
         last_event["longitude"] = float(last_event["longitude"])
         last_event["speed"] = int(last_event["speed"])
-        last_event["altitude"] = int(last_event["altitude"])
+        last_event["altitude"] = float(last_event["altitude"])
         last_event["odometer"] = int(last_event["odometer"])
         last_event["heading"] = int(last_event["heading"])
         last_event["userToken"] = payload['userToken']
