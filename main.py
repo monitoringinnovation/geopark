@@ -233,9 +233,9 @@ def handle_client(client_socket):
     request_data = client_socket.recv(1024)
     wialon_data = request_data.hex()    
     soap_payload = transform_wialon_to_soap(wialon_data)
-    create_event_motion(soap_payload)
     if soap_payload['eventTypeCode'] != "00":
         send_soap_request(soap_payload)
+        create_event_motion(soap_payload)
     else:
         print("eventTypeCode: 00")
     client_socket.close()
