@@ -202,7 +202,6 @@ def transform_wialon_to_soap(wialon_data):
             payload["speed"] = int(last_event["last_event"]["speed"])
             payload["odometer"] = int(last_event["last_event"]["odometer"])
             payload["heading"] = int(last_event["last_event"]["heading"])
-        time.sleep(1)
         print("payload")
         print(payload)
     else:
