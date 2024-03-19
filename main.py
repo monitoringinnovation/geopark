@@ -142,66 +142,71 @@ def transform_wialon_to_soap(wialon_data):
     logins_imei = res_imei.json()
     print("logins_imei")
     print(logins_imei)
-    id_unit = str(logins_imei["items"][0]["id"])
-    url_data = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_item&params={%22id%22:' + id_unit + ',%22flags%22:1060865}&sid=' + sid
-    print("url_data")
-    print(url_data)
-    res_data = requests.get(url_data)
-    logins = res_data.json()
-    print("sensores data")
-    print(logins)
-    sens_keys = logins["item"]["sens"]
-    for key in sens_keys.values():
-        if key.get("t") == "engine operation":
-            ignition_key = key.get("p")
+    if len(logins_imei["items"][0]) > 0:
+        id_unit = str(logins_imei["items"][0]["id"])
+        url_data = 'https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_item&params={%22id%22:' + id_unit + ',%22flags%22:1060865}&sid=' + sid
+        print("url_data")
+        print(url_data)
+        res_data = requests.get(url_data)
+        logins = res_data.json()
+        print("sensores data")
+        print(logins)
+        sens_keys = logins["item"]["sens"]
+        for key in sens_keys.values():
+            if key.get("t") == "engine operation":
+                ignition_key = key.get("p")
+            else:
+                continue
+        prms_vals = logins["item"]["prms"]
+        ignition_value_obj = prms_vals.get(ignition_key)
+        print("prms_vals")
+        print(prms_vals)
+        print(ignition_value_obj)
+        print("ignition_value_obj")
+        if ignition_value_obj is None:
+            ignition_value = 1
         else:
-            continue
-    prms_vals = logins["item"]["prms"]
-    ignition_value_obj = prms_vals.get(ignition_key)
-    print("prms_vals")
-    print(prms_vals)
-    print(ignition_value_obj)
-    print("ignition_value_obj")
-    if ignition_value_obj is None:
-        ignition_value = 1
+            ignition_value = ignition_value_obj.get("v")
+        odometer = logins["item"]["cnm"]
+        placa = logins["item"]["nm"]
+        data_coordinates = get_coordinates(id_unit, sid)
+        time_utc = data_coordinates["time_utc"]
+        latitude = data_coordinates["latitud"]
+        longitude = data_coordinates["longitud"]
+        altitude = data_coordinates["altitud"]
+        course = data_coordinates["heading"]
+        speed = data_coordinates["speed"]
+        event_code = "02"
+        payload = {
+            'modemIMEI': placa,
+            'eventTypeCode': event_code,
+            'dateTimeUTC': time_utc,
+            'GPSStatus': True,
+            'latitude': latitude,
+            'longitude': longitude,
+            'altitude': altitude,
+            'speed': speed,
+            'odometer': int(odometer) * 1000,
+            'heading': course,
+            'engineStatus': True if ignition_value == 1 else False,
+            'userToken': global_token_geo,
+        }
+        last_event = get_event(payload)
+        payload["eventTypeCode"] = last_event["eventCode"]
+        if not payload["latitude"]:
+            payload["latitude"] = float(last_event["last_event"]["latitude"])
+            payload["longitude"] = float(last_event["last_event"]["longitude"])
+            payload["altitude"] = int(last_event["last_event"]["altitude"])
+            payload["speed"] = int(last_event["last_event"]["speed"])
+            payload["odometer"] = int(last_event["last_event"]["odometer"])
+            payload["heading"] = int(last_event["last_event"]["heading"])
+        time.sleep(1)
+        print("payload")
+        print(payload)
     else:
-        ignition_value = ignition_value_obj.get("v")
-    odometer = logins["item"]["cnm"]
-    placa = logins["item"]["nm"]
-    data_coordinates = get_coordinates(id_unit, sid)
-    time_utc = data_coordinates["time_utc"]
-    latitude = data_coordinates["latitud"]
-    longitude = data_coordinates["longitud"]
-    altitude = data_coordinates["altitud"]
-    course = data_coordinates["heading"]
-    speed = data_coordinates["speed"]
-    event_code = "02"
-    payload = {
-        'modemIMEI': placa,
-        'eventTypeCode': event_code,
-        'dateTimeUTC': time_utc,
-        'GPSStatus': True,
-        'latitude': latitude,
-        'longitude': longitude,
-        'altitude': altitude,
-        'speed': speed,
-        'odometer': int(odometer) * 1000,
-        'heading': course,
-        'engineStatus': True if ignition_value == 1 else False,
-        'userToken': global_token_geo,
-    }
-    last_event = get_event(payload)
-    payload["eventTypeCode"] = last_event["eventCode"]
-    if not payload["latitude"]:
-        payload["latitude"] = float(last_event["last_event"]["latitude"])
-        payload["longitude"] = float(last_event["last_event"]["longitude"])
-        payload["altitude"] = int(last_event["last_event"]["altitude"])
-        payload["speed"] = int(last_event["last_event"]["speed"])
-        payload["odometer"] = int(last_event["last_event"]["odometer"])
-        payload["heading"] = int(last_event["last_event"]["heading"])
-    time.sleep(1)
-    print("payload")
-    print(payload)
+        print("error en imei")
+        print(imei_unit)
+        payload = {"eventTypeCode": "00"}
     return payload
 
 def send_soap_request(payload):
