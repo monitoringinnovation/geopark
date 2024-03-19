@@ -11,6 +11,8 @@ import struct
 import xml.sax.saxutils
 
 global_token_geo = None
+data_received_count = 0
+
 
 def getSid():
     url_token = "https://monitoringinnovation.com/api/enlistcontrolandroid/gettoken"
@@ -235,12 +237,16 @@ def send_soap_request(payload):
         print("ocurrio un error:", error)
 
 def handle_client(client_socket):
+    global data_received_count
     request_data = client_socket.recv(1024)
+    if request_data:
+        data_received_count += 1
     wialon_data = request_data.hex()    
     soap_payload = transform_wialon_to_soap(wialon_data)
     if soap_payload['eventTypeCode'] != "00":
         send_soap_request(soap_payload)
         create_event_motion(soap_payload)
+        print(data_received_count)
     else:
         print("eventTypeCode: 00")
     client_socket.close()
