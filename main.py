@@ -17,11 +17,16 @@ async def getSid():
     url_token = "https://monitoringinnovation.com/api/enlistcontrolandroid/gettoken"
     resp = requests.get(url_token)
     resp_token = resp.json()
-    res_sid = requests.get('https://hst-api.wialon.com/wialon/ajax.html?svc=token/login&params={"token":"'
-        + resp_token["result"]
-        + '"}')
+    token = resp_token["result"]
+    url_sid = (
+        'https://hst-api.wialon.com/wialon/ajax.html?svc=token/login&params={"token":"'
+        + token
+        + '"}'
+    )
+    res_sid = requests.get(url_sid)
     logins = res_sid.json()
-    return logins.get("eid")
+    sid = logins.get("eid")
+    return sid
 
 
 async def getTokenGeo():
@@ -36,15 +41,18 @@ async def getTokenGeo():
 
 
 def obtener_epoch_medianoche_actual():
-    medianoche = datetime.datetime.combine(datetime.datetime.now().date(), datetime.time.min)
+    fecha_actual = datetime.datetime.now().date()
+    medianoche = datetime.datetime.combine(fecha_actual, datetime.time.min)
     epoch_medianoche = int(medianoche.timestamp())
     return epoch_medianoche + 18000 + 86399
 
 
 async def get_last_event(placa):
-    res_event = requests.get(f"http://monitoringinnovation.com/api/geopark/get_last_event/placa={placa}")
+    event_url = f"http://monitoringinnovation.com/api/geopark/get_last_event/placa={placa}"
+    res_event = requests.get(event_url)
     logins_event = res_event.json()
-    return logins_event["result"]
+    last_event = logins_event["result"]
+    return last_event
 
 
 async def get_event(payload):
@@ -66,6 +74,7 @@ async def get_event(payload):
         )
 
         response["last_event"] = last_event
+
         if last_event["dateTimeUTC"] == payload["dateTimeUTC"]:
             response["eventCode"] = last_event["eventTypeCode"]
         delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
@@ -113,16 +122,24 @@ async def get_event(payload):
 
 
 async def get_coordinates(id_unit, sid):
-    res_unload_msg = requests.get("https://hst-api.wialon.com/wialon/ajax.html?svc=messages/unload&params={}&sid="
-        + sid)
-    res_coordinates = requests.get("https://hst-api.wialon.com/wialon/ajax.html?svc=messages/load_last&params={"
+    url_unload_msg = (
+        "https://hst-api.wialon.com/wialon/ajax.html?svc=messages/unload&params={}&sid="
+        + sid
+    )
+    res_unload_msg = requests.get(url_unload_msg)
+    epoch_time_right = obtener_epoch_medianoche_actual()
+    url_coordinates = (
+        "https://hst-api.wialon.com/wialon/ajax.html?svc=messages/load_last&params={"
         + '"itemId":'
         + str(id_unit)
         + ',"lastTime":'
-        + str(obtener_epoch_medianoche_actual())
+        + str(epoch_time_right)
         + ',"lastCount":1,"flags":7,"flagsMask":0,"loadCount":1}'
         + "&sid="
-        + sid)
+        + sid
+    )
+    print(url_coordinates)
+    res_coordinates = requests.get(url_coordinates)
     logins_coordinates = res_coordinates.json()
     if logins_coordinates["messages"][0].get("pos") is None:
         latitud = False
@@ -156,19 +173,29 @@ async def create_event_motion(data_motion):
         "%Y-%m-%d %H:%M:%S"
     )
     data_to_send = {"params": data_motion}
-    res_event = requests.post("https://monitoringinnovation.com/api/geopark/create_event", json=data_to_send)
-    return res_event
+    event_url = (
+        "https://monitoringinnovation.com/api/geopark/create_event"
+    )
+    res_event = requests.post(event_url, json=data_to_send)
+    logins_event = res_event
+    return logins_event
 
 
 async def transform_wialon_to_soap(wialon_data):
     global global_token_geo
+    controller_identifier = wialon_data[8:40]
     sid = await getSid()
-    imei_unit = re.findall(r"\b\d{8,}\b", str(codecs.decode(wialon_data[8:40], "hex")))[0]
-    res_imei = requests.get("https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_items&params={%22spec%22:{%22itemsType%22:%22avl_unit%22,%22propName%22:%22sys_unique_id%22,%22propValueMask%22:%22"
+    imei_unit = re.findall(r"\b\d{8,}\b", str(codecs.decode(controller_identifier, "hex")))[0]
+    url_imei = (
+        "https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_items&params={%22spec%22:{%22itemsType%22:%22avl_unit%22,%22propName%22:%22sys_unique_id%22,%22propValueMask%22:%22"
         + imei_unit
         + '%22,%22sortType%22:%22sys_unique_id%22},%22force%22:1,%22flags%22:1060865,%22from%22:0,%22to%22:0}'
         + "&sid="
-        + sid)
+        + sid
+    )
+    print("url_imei")
+    print(url_imei)
+    res_imei = requests.get(url_imei)
     logins_imei = res_imei.json()
     print("logins_imei")
     print(logins_imei)
@@ -182,22 +209,35 @@ async def transform_wialon_to_soap(wialon_data):
                 continue
         prms_vals = logins_imei["items"][0]["prms"]
         ignition_value_obj = prms_vals.get(ignition_key)
+        print("prms_vals")
+        print(prms_vals)
+        print(ignition_value_obj)
+        print("ignition_value_obj")
         if ignition_value_obj is None:
             ignition_value = 1
         else:
             ignition_value = ignition_value_obj.get("v")
+        odometer = logins_imei["items"][0]["cnm"]
+        placa = logins_imei["items"][0]["nm"]
         data_coordinates = await get_coordinates(id_unit, sid)
+        time_utc = data_coordinates["time_utc"]
+        latitude = data_coordinates["latitud"]
+        longitude = data_coordinates["longitud"]
+        altitude = data_coordinates["altitud"]
+        course = data_coordinates["heading"]
+        speed = data_coordinates["speed"]
+        event_code = "02"
         payload = {
-            "modemIMEI": logins_imei["items"][0]["nm"],
-            "eventTypeCode": "02",
-            "dateTimeUTC": data_coordinates["time_utc"],
+            "modemIMEI": placa,
+            "eventTypeCode": event_code,
+            "dateTimeUTC": time_utc,
             "GPSStatus": True,
-            "latitude": data_coordinates["latitud"],
-            "longitude": data_coordinates["longitud"],
-            "altitude": data_coordinates["altitud"],
-            "speed": data_coordinates["speed"],
-            "odometer": int(logins_imei["items"][0]["cnm"]) * 1000,
-            "heading": data_coordinates["heading"],
+            "latitude": latitude,
+            "longitude": longitude,
+            "altitude": altitude,
+            "speed": speed,
+            "odometer": int(odometer) * 1000,
+            "heading": course,
             "engineStatus": True if ignition_value == 1 else False,
             "userToken": global_token_geo,
         }
@@ -234,11 +274,17 @@ async def send_soap_request(payload):
         try:
             print("payload 2")
             print(payload)
-            client = zeep.Client(wsdl="http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl")
+            wsdl_url = (
+                "http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl"
+            )
+            client = zeep.Client(wsdl=wsdl_url)
             result = client.service.SaveTracking(**payload)
             print(result)
         except Exception as error:
-            client = zeep.Client(wsdl="http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl")
+            wsdl_url = (
+                "http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl"
+            )
+            client = zeep.Client(wsdl=wsdl_url)
             global_token_geo = await getTokenGeo()
             payload["userToken"] = global_token_geo
             result = client.service.SaveTracking(**payload)
