@@ -15,7 +15,7 @@ data_received_count = 0
 
 async def getSid():
     url_token = "https://monitoringinnovation.com/api/enlistcontrolandroid/gettoken"
-    resp = await requests.get(url_token)
+    resp = requests.get(url_token)
     resp_token = resp.json()
     token = resp_token["result"]
     url_sid = (
