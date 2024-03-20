@@ -23,7 +23,7 @@ async def getSid():
         + token
         + '"}'
     )
-    res_sid = await requests.get(url_sid)
+    res_sid = requests.get(url_sid)
     logins = res_sid.json()
     sid = logins.get("eid")
     return sid
