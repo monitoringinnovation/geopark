@@ -49,7 +49,7 @@ def obtener_epoch_medianoche_actual():
 
 async def get_last_event(placa):
     event_url = f"http://monitoringinnovation.com/api/geopark/get_last_event/placa={placa}"
-    res_event = await requests.get(event_url)
+    res_event = requests.get(event_url)
     logins_event = res_event.json()
     last_event = logins_event["result"]
     return last_event
