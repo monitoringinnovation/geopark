@@ -176,7 +176,7 @@ async def create_event_motion(data_motion):
     event_url = (
         "https://monitoringinnovation.com/api/geopark/create_event"
     )
-    res_event = await requests.post(event_url, json=data_to_send)
+    res_event = requests.post(event_url, json=data_to_send)
     logins_event = res_event
     return logins_event
 
