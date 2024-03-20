@@ -294,6 +294,7 @@ async def handle_client(client_socket):
     start_time = time.time()
     request_data = client_socket.recv(1024)
     if request_data:
+        start_time = time.time()
         data_received_count += 1
     wialon_data = request_data.hex()
     soap_payload = await transform_wialon_to_soap(wialon_data)
