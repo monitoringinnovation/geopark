@@ -31,7 +31,7 @@ async def getTokenGeo():
     global global_token_geo
     wsdl_url = "http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl"
     client = zeep.Client(wsdl_url)
-    token_geo = await client.service.Authenticate(
+    token_geo = client.service.Authenticate(
         userName="gp.gpscontrol", password="GsZsECVHZoJd@k9u"
     )
     global_token_geo = token_geo
