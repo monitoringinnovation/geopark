@@ -6,6 +6,8 @@ import xml.sax.saxutils
 import re
 import codecs
 import zeep
+import schedule
+import time
 
 global_token_geo = None
 data_received_count = 0
