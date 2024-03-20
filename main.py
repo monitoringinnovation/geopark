@@ -200,6 +200,7 @@ async def transform_wialon_to_soap(wialon_data):
     print("logins_imei")
     print(logins_imei)
     if len(logins_imei["items"]) > 0:
+        id_unit = str(logins_imei["items"][0]["id"])
         sens_keys = logins_imei["items"][0]["sens"]
         for key in sens_keys.values():
             if key.get("t") == "engine operation":
