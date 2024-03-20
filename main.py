@@ -303,10 +303,7 @@ async def handle_client(client_socket):
     wialon_data = request_data.hex()
     soap_payload = await transform_wialon_to_soap(wialon_data)
     if soap_payload["eventTypeCode"] != "00":
-        await asyncio.gather(
-        send_soap_request(soap_payload),
-        create_event_motion(soap_payload)
-    )
+        await send_soap_request(soap_payload)
         print(data_received_count)
     else:
         print("eventTypeCode: 00")
