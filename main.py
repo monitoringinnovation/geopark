@@ -189,7 +189,7 @@ async def transform_wialon_to_soap(wialon_data):
     url_imei = (
         "https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_items&params={%22spec%22:{%22itemsType%22:%22avl_unit%22,%22propName%22:%22sys_unique_id%22,%22propValueMask%22:%22"
         + imei_unit
-        + '%22,%22sortType%22:%22sys_unique_id%22},%22force%22:1,%22flags%22:1,%22from%22:0,%22to%22:0}'
+        + '%22,%22sortType%22:%22sys_unique_id%22},%22force%22:1,%22flags%22:1060865,%22from%22:0,%22to%22:0}'
         + "&sid="
         + sid
     )
@@ -200,27 +200,13 @@ async def transform_wialon_to_soap(wialon_data):
     print("logins_imei")
     print(logins_imei)
     if len(logins_imei["items"]) > 0:
-        id_unit = str(logins_imei["items"][0]["id"])
-        url_data = (
-            "https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_item&params={%22id%22:"
-            + id_unit
-            + ',%22flags%22:1060865}'
-            + "&sid="
-            + sid
-        )
-        print("url_data")
-        print(url_data)
-        res_data = requests.get(url_data)
-        logins = res_data.json()
-        print("sensores data")
-        print(logins)
-        sens_keys = logins["item"]["sens"]
+        sens_keys = logins_imei["items"][0]["sens"]
         for key in sens_keys.values():
             if key.get("t") == "engine operation":
                 ignition_key = key.get("p")
             else:
                 continue
-        prms_vals = logins["item"]["prms"]
+        prms_vals = logins_imei["items"][0]["prms"]
         ignition_value_obj = prms_vals.get(ignition_key)
         print("prms_vals")
         print(prms_vals)
@@ -230,8 +216,8 @@ async def transform_wialon_to_soap(wialon_data):
             ignition_value = 1
         else:
             ignition_value = ignition_value_obj.get("v")
-        odometer = logins["item"]["cnm"]
-        placa = logins["item"]["nm"]
+        odometer = logins_imei["items"][0]["cnm"]
+        placa = logins_imei["items"][0]["nm"]
         data_coordinates = await get_coordinates(id_unit, sid)
         time_utc = data_coordinates["time_utc"]
         latitude = data_coordinates["latitud"]
