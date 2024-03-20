@@ -291,6 +291,7 @@ async def send_soap_request(payload):
 
 async def handle_client(client_socket):
     global data_received_count
+    start_time = time.time()
     request_data = client_socket.recv(1024)
     if request_data:
         data_received_count += 1
@@ -302,6 +303,9 @@ async def handle_client(client_socket):
         print(data_received_count)
     else:
         print("eventTypeCode: 00")
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Tiempo de procesamiento del mensaje: {elapsed_time} segundos")
     client_socket.close()
 
 
