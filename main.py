@@ -241,7 +241,11 @@ async def transform_wialon_to_soap(wialon_data):
             "engineStatus": True if ignition_value == 1 else False,
             "userToken": global_token_geo,
         }
+        strat_time = time.time()
         last_event = await get_event(payload)
+        edn_time = time.time()
+        fin_time = strat_time - edn_time
+        print(f"Tiempo de obtención del evento: {fin_time} segundos")
         payload["eventTypeCode"] = last_event["eventCode"]
         if not payload["latitude"]:
             payload["latitude"] = float(last_event["last_event"]["latitude"])
