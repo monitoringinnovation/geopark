@@ -300,7 +300,13 @@ async def handle_client(client_socket):
     if request_data:
         start_time = time.time()
         data_received_count += 1
+    print("*"*10)
+    print("request data on handle client")
+    print(request_data)
     wialon_data = request_data.hex()
+    print("*"*10)
+    print("request data on handle client on hex")
+    print(wialon_data)
     soap_payload = await transform_wialon_to_soap(wialon_data)
     if soap_payload["eventTypeCode"] != "00":
         await send_soap_request(soap_payload)
