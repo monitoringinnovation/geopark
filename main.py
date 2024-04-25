@@ -30,6 +30,9 @@ async def getSid():
 
 
 async def getTokenGeo():
+    # uses zeep to get a connection with the destination server
+    # then uses the Authenticate service (receives userName, password) and 
+    # get a token to save that on global_token_geo
     global global_token_geo
     wsdl_url = "http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl"
     client = zeep.Client(wsdl_url)
@@ -48,6 +51,8 @@ def obtener_epoch_medianoche_actual():
 
 
 async def get_last_event(placa):
+    # uses the plate to get and return the last event registered on monitoring to
+    # to make calcs with the new event to take place
     event_url = f"http://monitoringinnovation.com/api/geopark/get_last_event/placa={placa}"
     res_event = requests.get(event_url)
     logins_event = res_event.json()
@@ -59,6 +64,9 @@ async def get_event(payload):
     last_event = await get_last_event(payload["modemIMEI"])
     print(last_event)
     response = {}
+    # verify if last event and re push the info transformed
+    # if info is not in last event, push the info on the payload
+    # then set the last event refactor info on the response 
     if last_event:
         last_event["latitude"] = float(last_event["latitude"])
         last_event["longitude"] = float(last_event["longitude"])
@@ -74,9 +82,10 @@ async def get_event(payload):
         )
 
         response["last_event"] = last_event
-
+        # 
         if last_event["dateTimeUTC"] == payload["dateTimeUTC"]:
             response["eventCode"] = last_event["eventTypeCode"]
+
         delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
         delta_time = int(last_event["dateTimeUTC"].timestamp()) - int(
             payload["dateTimeUTC"].timestamp()
@@ -182,9 +191,13 @@ async def create_event_motion(data_motion):
 
 
 async def transform_wialon_to_soap(wialon_data):
+    #Receives as input the data request on hex
     global global_token_geo
+    # get the part of the data that contains the "imei"
     controller_identifier = wialon_data[8:40]
     sid = await getSid()
+    # uses a regular expression to get the fst data that coincides with the imei info
+    # and create a url with the imei and sid to auth 
     imei_unit = re.findall(r"\b\d{8,}\b", str(codecs.decode(controller_identifier, "hex")))[0]
     url_imei = (
         "https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_items&params={%22spec%22:{%22itemsType%22:%22avl_unit%22,%22propName%22:%22sys_unique_id%22,%22propValueMask%22:%22"
@@ -195,11 +208,14 @@ async def transform_wialon_to_soap(wialon_data):
     )
     print("url_imei")
     print(url_imei)
+    # set a get request with the url and transform the response to a json
     res_imei = requests.get(url_imei)
     logins_imei = res_imei.json()
     print("logins_imei")
     print(logins_imei)
+    
     if len(logins_imei["items"]) > 0:
+        # since here just iterate to get the ignition value
         id_unit = str(logins_imei["items"][0]["id"])
         sens_keys = logins_imei["items"][0]["sens"]
         for key in sens_keys.values():
@@ -213,10 +229,13 @@ async def transform_wialon_to_soap(wialon_data):
         print(prms_vals)
         print(ignition_value_obj)
         print("ignition_value_obj")
+        # if can not get ignition value, set as default 1
         if ignition_value_obj is None:
             ignition_value = 1
+        # if get the value, set that on ignition value
         else:
             ignition_value = ignition_value_obj.get("v")
+        # call the data from the response and save that on vars
         odometer = logins_imei["items"][0]["cnm"]
         placa = logins_imei["items"][0]["nm"]
         data_coordinates = await get_coordinates(id_unit, sid)
@@ -226,7 +245,9 @@ async def transform_wialon_to_soap(wialon_data):
         altitude = data_coordinates["altitud"]
         course = data_coordinates["heading"]
         speed = data_coordinates["speed"]
+        # initialize event code as "02" , "00" means error
         event_code = "02"
+        # arm the payload in accordance with the api documentation
         payload = {
             "modemIMEI": placa,
             "eventTypeCode": event_code,
@@ -294,8 +315,10 @@ async def send_soap_request(payload):
 
 
 async def handle_client(client_socket):
+    # receives the client socket (connection) as args
     global data_received_count
     start_time = time.time()
+    # assign to request data the info sended by the client with the buffer size as 1024 
     request_data = client_socket.recv(1024)
     if request_data:
         start_time = time.time()
@@ -303,39 +326,56 @@ async def handle_client(client_socket):
     print("*"*10)
     print("request data on handle client")
     print(request_data)
+    # saves the data in hex
     wialon_data = request_data.hex()
     print("*"*10)
     print("request data on handle client on hex")
     print(wialon_data)
+    # uses transform_wialon_to_soap with the data as args 
+    # 
     soap_payload = await transform_wialon_to_soap(wialon_data)
+    # verify if the response contains eventType... != 00, due that 
+    # significs error on imei 
     if soap_payload["eventTypeCode"] != "00":
+        # if has not error on imei, continues with the info sending
         await send_soap_request(soap_payload)
         await create_event_motion(soap_payload)
         print(data_received_count)
     else:
         print("eventTypeCode: 00")
+    # saves the exec time 
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Tiempo de procesamiento del mensaje: {elapsed_time} segundos")
+    # and closes the connection
     client_socket.close()
 
 
 async def start_server(port):
+    # create a server based on IPV4 and socked used to TCP
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # listen all on the server and the specified port
     server.bind(("0.0.0.0", port))
+    # set a max of 5 clients connections 
     server.listen(5)
     print(f"[*] Listening on 0.0.0.0:{port}")
     while True:
+        # accept the requests and get the client object (the connection) and client ip and port in a tuple
         client, addr = server.accept()
         print(f"[*] Accepted connection from {addr[0]}:{addr[1]}")
+        #defines client_handler as async task calling handle_client with the client as arg 
         client_handler = asyncio.create_task(handle_client(client))
         await client_handler
 
 
 if __name__ == "__main__":
-    listen_port = 12395
-    asyncio.run(getTokenGeo())
-    schedule.every(24).hours.do(asyncio.run, getTokenGeo())
+    # defines a port to listen
+    listen_port = 12395 
+    # uses asyncio to run getTokenGeo to save in global get_token_geo the token
+    asyncio.run(getTokenGeo()) 
+    # ensure to get a valid token on global get_token_geo, due that expires on 24 hrs
+    schedule.every(24).hours.do(asyncio.run, getTokenGeo()) 
+    # starts a server listening on a indicated port
     asyncio.run(start_server(listen_port))
     while True:
         schedule.run_pending()
