@@ -14,6 +14,10 @@ data_received_count = 0
 
 
 async def getSid():
+    """
+    make a fst call to monitoring to get a token,
+    then uses that to call wialon and get the sid to return that
+    """
     url_token = "https://monitoringinnovation.com/api/enlistcontrolandroid/gettoken"
     resp = requests.get(url_token)
     resp_token = resp.json()
@@ -30,9 +34,11 @@ async def getSid():
 
 
 async def getTokenGeo():
-    # uses zeep to get a connection with the destination server
-    # then uses the Authenticate service (receives userName, password) and 
-    # get a token to save that on global_token_geo
+    """
+    uses zeep to get a connection with the destination server
+    then uses the Authenticate service (receives userName, password) and 
+    get a token to save that on global_token_geo
+    """
     global global_token_geo
     wsdl_url = "http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl"
     client = zeep.Client(wsdl_url)
@@ -44,15 +50,26 @@ async def getTokenGeo():
 
 
 def obtener_epoch_medianoche_actual():
+    """
+    return the localdate at 23 59 59 on unix time (epoch)
+    """
+    # select just the actual date (wo hourly info) using datetime
     fecha_actual = datetime.datetime.now().date()
+    # add the hh mm ss to the actual date: to add format hh mm ss
     medianoche = datetime.datetime.combine(fecha_actual, datetime.time.min)
+    # convert the time on unix time (epoch)
     epoch_medianoche = int(medianoche.timestamp())
+    # return the unix time gmt-5 at the local date at 23 59 59
     return epoch_medianoche + 18000 + 86399
 
 
 async def get_last_event(placa):
-    # uses the plate to get and return the last event registered on monitoring to
-    # to make calcs with the new event to take place
+    """
+    receives a plate
+    uses the plate to get and return the last event registered on monitoring to
+    to make calcs with the new event to take place
+    returns a dict with the last event on "result"
+    """
     event_url = f"http://monitoringinnovation.com/api/geopark/get_last_event/placa={placa}"
     res_event = requests.get(event_url)
     logins_event = res_event.json()
@@ -61,8 +78,10 @@ async def get_last_event(placa):
 
 
 async def get_event(payload):
-    # call the last event registered on monitoring and compare that with the payload
-    # returns a dict with the "last event", and the updated "event code"
+    """
+    call the last event registered on monitoring and compare that with the payload
+    returns a dict with the "last event", and the updated "event code"
+    """
     last_event = await get_last_event(payload["modemIMEI"])
     print(last_event)
     response = {}
@@ -143,6 +162,7 @@ async def get_coordinates(id_unit, sid):
         + sid
     )
     res_unload_msg = requests.get(url_unload_msg)
+    # gets the datetime on unix time, localdate at 23 59 59
     epoch_time_right = obtener_epoch_medianoche_actual()
     url_coordinates = (
         "https://hst-api.wialon.com/wialon/ajax.html?svc=messages/load_last&params={"
@@ -155,6 +175,8 @@ async def get_coordinates(id_unit, sid):
         + sid
     )
     print(url_coordinates)
+    # uses the constructed url to get the coordinates
+    # make a dict with that and return it 
     res_coordinates = requests.get(url_coordinates)
     logins_coordinates = res_coordinates.json()
     if logins_coordinates["messages"][0].get("pos") is None:
@@ -185,6 +207,10 @@ async def get_coordinates(id_unit, sid):
 
 
 async def create_event_motion(data_motion):
+    """
+    receives a dict with the payload and make a post to   monitoring
+    as a new last event
+    """
     data_motion["dateTimeUTC"] = data_motion["dateTimeUTC"].strftime(
         "%Y-%m-%d %H:%M:%S"
     )
@@ -251,7 +277,7 @@ async def transform_wialon_to_soap(wialon_data):
         # call the data from the response and save that on vars
         odometer = logins_imei["items"][0]["cnm"]
         placa = logins_imei["items"][0]["nm"]
-        # 
+        # get an dict with the current coordinates
         data_coordinates = await get_coordinates(id_unit, sid)
         time_utc = data_coordinates["time_utc"]
         latitude = data_coordinates["latitud"]
@@ -306,7 +332,13 @@ async def transform_wialon_to_soap(wialon_data):
 
 
 async def send_soap_request(payload):
+    """
+    receives a dict with the payload, transform that to an xml object
+    and make a post to the client using zeep to establish a connection
+    as a new last event
+    """
     global global_token_geo
+    # iterate the payload to transform that to xml 
     for key, value in payload.items():
         if isinstance(value, str):
             payload[key] = xml.sax.saxutils.escape(value)
@@ -314,6 +346,7 @@ async def send_soap_request(payload):
     client = zeep.Client(wsdl=wsdl_url)
     try:
         try:
+            # try to uses SaveTracking client function to send info 
             print("payload 2")
             print(payload)
             wsdl_url = (
@@ -323,6 +356,8 @@ async def send_soap_request(payload):
             result = client.service.SaveTracking(**payload)
             print(result)
         except Exception as error:
+            # if cant send the info, it might be because token is invalid
+            # then updates the payload with the new token and retry
             wsdl_url = (
                 "http://naviwebsvc.azurewebsites.net/NaviMonitoringService.svc?wsdl"
             )
@@ -336,7 +371,11 @@ async def send_soap_request(payload):
 
 
 async def handle_client(client_socket):
-    # receives the client socket (connection) as args
+    """
+    receives the client socket (connection) as args
+    get the client socket data and transform that to hex
+    make the calls to get the payload to sent to the client and monitoring
+    """
     global data_received_count
     start_time = time.time()
     # assign to request data the info sended by the client with the buffer size as 1024 
@@ -353,7 +392,6 @@ async def handle_client(client_socket):
     print("request data on handle client on hex")
     print(wialon_data)
     # uses transform_wialon_to_soap with the data as args 
-    # 
     soap_payload = await transform_wialon_to_soap(wialon_data)
     # verify if the response contains eventType... != 00, due that 
     # significs error on imei 
@@ -373,7 +411,9 @@ async def handle_client(client_socket):
 
 
 async def start_server(port):
-    # create a server based on IPV4 and socked used to TCP
+    """
+    create a server based on IPV4 and socked used to TCP
+    """
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # listen all on the server and the specified port
     server.bind(("0.0.0.0", port))
