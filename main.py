@@ -61,6 +61,8 @@ async def get_last_event(placa):
 
 
 async def get_event(payload):
+    # call the last event registered on monitoring and compare that with the payload
+    # returns a dict with the "last event", and the updated "event code"
     last_event = await get_last_event(payload["modemIMEI"])
     print(last_event)
     response = {}
@@ -82,10 +84,10 @@ async def get_event(payload):
         )
 
         response["last_event"] = last_event
-        # 
+        # verify if the payload is equal to the last even to assign the same event code
         if last_event["dateTimeUTC"] == payload["dateTimeUTC"]:
             response["eventCode"] = last_event["eventTypeCode"]
-
+        # finds the delta speed and delta time to calculate the speed hard
         delta_speed = (last_event["speed"] - payload["speed"]) * 0.277778
         delta_time = int(last_event["dateTimeUTC"].timestamp()) - int(
             payload["dateTimeUTC"].timestamp()
@@ -95,7 +97,7 @@ async def get_event(payload):
             factor_event = delta_speed / delta_time
             speed_hard = factor_event / 9.807
         print(last_event)
-
+        # uses the calculated data to defines a event code 
         if (
             payload["engineStatus"] == 1
             and last_event["eventTypeCode"] == "04"
@@ -131,6 +133,11 @@ async def get_event(payload):
 
 
 async def get_coordinates(id_unit, sid):
+    """
+    receives id and sid to make the request to wialon
+    returns an dict with the coordinates, if cant get that, return 
+    a dict with False values
+    """
     url_unload_msg = (
         "https://hst-api.wialon.com/wialon/ajax.html?svc=messages/unload&params={}&sid="
         + sid
@@ -191,7 +198,13 @@ async def create_event_motion(data_motion):
 
 
 async def transform_wialon_to_soap(wialon_data):
-    #Receives as input the data request on hex
+    """
+    Receives as input the data request on hex
+    gets an imei to make a call to wialon and gets the gps data
+    with the data compare that with the last event on monitoring
+    to get deltas and event status
+    then returns the payload with the last data and status code
+    """
     global global_token_geo
     # get the part of the data that contains the "imei"
     controller_identifier = wialon_data[8:40]
@@ -213,7 +226,7 @@ async def transform_wialon_to_soap(wialon_data):
     logins_imei = res_imei.json()
     print("logins_imei")
     print(logins_imei)
-    
+    # verify if gets an imei 
     if len(logins_imei["items"]) > 0:
         # since here just iterate to get the ignition value
         id_unit = str(logins_imei["items"][0]["id"])
@@ -238,6 +251,7 @@ async def transform_wialon_to_soap(wialon_data):
         # call the data from the response and save that on vars
         odometer = logins_imei["items"][0]["cnm"]
         placa = logins_imei["items"][0]["nm"]
+        # 
         data_coordinates = await get_coordinates(id_unit, sid)
         time_utc = data_coordinates["time_utc"]
         latitude = data_coordinates["latitud"]
@@ -263,11 +277,17 @@ async def transform_wialon_to_soap(wialon_data):
             "userToken": global_token_geo,
         }
         strat_time = time.time()
+        # call the last event registered on monitoring and compare that with the payload
+        # returns a dict with the "last event", and the updated "event code"
+        # based on calcs on the function
         last_event = await get_event(payload)
         edn_time = time.time()
         fin_time = strat_time - edn_time
         print(f"Tiempo de obtención del evento: {fin_time} segundos")
+        # defines the event code on payload based on the event code on payload (calculated early)
         payload["eventTypeCode"] = last_event["eventCode"]
+        # if latitude on payload dont exist, it is understood that 
+        # is not the other telemetry data, then a copy od the data on last event is posted
         if not payload["latitude"]:
             payload["latitude"] = float(last_event["last_event"]["latitude"])
             payload["longitude"] = float(last_event["last_event"]["longitude"])
@@ -277,6 +297,7 @@ async def transform_wialon_to_soap(wialon_data):
             payload["heading"] = int(last_event["last_event"]["heading"])
         print("payload")
         print(payload)
+    # if cant get an imei print an error and ser event code 00
     else:
         print("error en imei")
         print(imei_unit)
