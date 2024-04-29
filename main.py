@@ -45,6 +45,8 @@ async def getTokenGeo():
     token_geo = client.service.Authenticate(
         userName="gp.gpscontrol", password="GsZsECVHZoJd@k9u"
     )
+    print("token_geo ............................")
+    print(token_geo)
     global_token_geo = token_geo
     return token_geo
 
